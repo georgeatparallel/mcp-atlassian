@@ -122,6 +122,67 @@ confluence_get_page_views: {"page_id": "12345678"}
 
 ## Cross-Product Workflows
 
+### Research a Jira Issue with Public Sources
+
+Combine internal Jira and Confluence context with current public vendor
+documentation using an optional second MCP server in your client.
+[Parallel Search MCP](https://docs.parallel.ai/integrations/mcp/search-mcp)
+provides free web search and page fetching without an account or API key.
+Anonymous search uses Fast mode and is rate limited.
+
+#### Set up in Cursor
+
+First configure MCP Atlassian using the [configuration guide](/docs/configuration).
+In `~/.cursor/mcp.json`, merge the following `Parallel Search MCP` entry into your
+existing `mcpServers` object. Keep your `mcp-atlassian` entry and its credentials:
+
+```json
+{
+  "mcpServers": {
+    "Parallel Search MCP": {
+      "url": "https://search.parallel.ai/mcp"
+    }
+  }
+}
+```
+
+Enable both servers in Cursor's MCP settings. Confirm that the available tools
+include Parallel's `web_search` and `web_fetch`, plus the MCP Atlassian tools you
+need below. See [Cursor's MCP documentation](https://cursor.com/docs/context/mcp)
+for configuration and tool approval settings.
+
+The client coordinates the two servers. MCP Atlassian still uses your configured
+Atlassian credentials; Parallel does not provide access to your Jira or Confluence
+instance.
+
+#### Investigate and draft a response
+
+1. **Gather internal context.** Use `jira_get_issue` to read the issue, then
+   `confluence_search` and `confluence_get_page` to find relevant internal guidance.
+2. **Choose a public research question.** Use only public product names, versions,
+   and non-sensitive error messages. Do not send issue descriptions, internal
+   URLs, customer data, or credentials to external search or fetch tools. Review
+   the tool arguments before approving each external call.
+3. **Find and read public sources.** Ask the assistant to use Parallel's
+   `web_search` for vendor documentation, then `web_fetch` on relevant public
+   URLs to check the details. For example, after reviewing the query:
+
+   ```text
+   Use Parallel to find the PostgreSQL documentation for connection timeouts in
+   libpq. Fetch the relevant official documentation and cite the source URLs.
+   Use only this public question in external tool calls.
+   ```
+
+4. **Draft in chat.** Compare the public guidance with the internal context.
+   Include source URLs, distinguish confirmed facts from proposed fixes, and
+   flag version differences. Ask for a draft Jira comment or Confluence page
+   without writing anything yet.
+5. **Review before publishing.** Check the content and destination. Only after
+   approval, ask the assistant to use `jira_add_comment` or
+   `confluence_create_page`. If `READ_ONLY_MODE=true` is configured, keep the
+   result as a draft because write tools are unavailable. Existing
+   [tool filters](/docs/configuration#tool-filtering) also still apply.
+
 ### Link Jira Issues to Confluence Pages
 
 1. **Create a Confluence page with project context:**
